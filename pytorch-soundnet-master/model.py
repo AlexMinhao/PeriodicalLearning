@@ -1,5 +1,5 @@
 from soundnet import SoundNet
-from Attentation import Encoder, Decoder, Gaussian_Attentation
+from Attentation import Encoder, Decoder, Gaussian_Attentation, PlainDecoder, PlainEncoder
 import torch
 import numpy as np
 import torch.nn as nn
@@ -64,62 +64,67 @@ class DeepConvLSTM(nn.Module):
                                dropout=0.2)
 
         self.out = nn.Linear(72 * 200, 4)
-    def forward(self, x, x_lengths):
+        self.out_att = nn.Linear(200, 4)
+        self.hid_att = nn.Linear(100, 72)
+    def forward(self, x, x_lengths, atten):
         b, c, w, h = x.size() # 5 1 3 72
         x = self.feature_extractor(x)  # 5 100 1 72
         x = torch.squeeze(x).transpose(1, 2)
 
-        encoder_out, hid = self.encoder(x, x_lengths) #5 60 200
-        encoder_out = encoder_out.view(b, -1)
-        padding_size = 72 - encoder_out.shape[1] / 200
-        padding = (torch.ones(b, int(padding_size) * 200)*10e-15).cuda()
-        encoder_out = torch.cat((encoder_out, padding), dim=1)
-        encoder_out = self.out(encoder_out)
-        return encoder_out, hid
+        encoder_out, hid = self.encoder(x, x_lengths) #5 60 200    1 5 100
+
+        padding_size = 72 - encoder_out.shape[1]
+
+        if attention:
+            att = atten.view(b, c, -1)
+            att = self.hid_att(hid.view(b,-1)).view(b, c, -1)
+            padding = (torch.ones(b, int(padding_size), 200) * 10e-15).cuda()
+            encoder_out = torch.cat((encoder_out, padding), dim=1)
+            out = torch.bmm(att,encoder_out).view(b,-1)
+            out = self.out_att(out)
+            return out, hid
+        else:
+            encoder_out = encoder_out.view(b, -1)
+            padding = (torch.ones(b, int(padding_size)*200) * 10e-15).cuda()
+            encoder_out = torch.cat((encoder_out, padding), dim=1)
+            encoder_out = self.out(encoder_out)
+            return encoder_out, hid
 
 
 class Seq2Seq(nn.Module):
     def __init__(self):
         super(Seq2Seq, self).__init__()
-        self.encoder = Encoder(vocab_size=72,
-                   embed_size=100,
-                   enc_hidden_size=100,
-                   dec_hidden_size=100,
-                   dropout=0.2)
-        self.decoder = Decoder(vocab_size=72,
-                   embed_size=100,
-                   enc_hidden_size=100,
-                   dec_hidden_size=100,
-                   dropout=0.2)
+        self.encoder = PlainEncoder(vocab_size= 3,
+                      hidden_size= 100,
+                      dropout= 0.2)
+        self.decoder = PlainDecoder(vocab_size= 3,
+                      hidden_size= 100,
+                      dropout= 0.2)
         self.feature_extractor = ResNetExtractor()
         self.atten = Gaussian_Attentation(in_channel=1)
         self.fc = nn.Linear(60*72, 4)
     def forward(self, x, x_lengths, y):
         b, c, w, h = x.size()
-        x = self.feature_extractor(x)
+        # x = self.feature_extractor(x)
         x = torch.squeeze(x).transpose(1,2)
         # atten = x.view(b, 1, w, 1)
         # atten, para = self.atten(atten)
         # atten = atten.view(b, w, h)
         encoder_out, hid = self.encoder(x, x_lengths)
         # encoder_out_atten, hid_atten = self.encoder(atten, x_lengths)
-        output, hid, attn = self.decoder(ctx = encoder_out,
-                    ctx_lengths = x_lengths,
+        output, hid  = self.decoder(
                     y = encoder_out,
                     y_lengths = x_lengths,
                     hid=hid)
 
-        return output, attn
+        return output
 
 
 
 if __name__ == '__main__':
-   # nx = torch.rand(20, 1, 3, 72).float().cuda()
-   #
-   # model = Model(
-   #          d_model=64, d_inner=2048,
-   #          n_head=8, d_k=32, d_v=32,
-   #           dropout=0.1, NUM_FILTERS = 256*3).cuda()
+   nx = torch.rand(20, 1, 3, 72).float().cuda()
+
+
 
    nx = np.zeros((5,  72))
 
@@ -130,11 +135,16 @@ if __name__ == '__main__':
        len_nx.append((i + 1) * 12)
 
    nx = torch.rand(5, 1, 3, 72).float().cuda()
+   ny = torch.rand(5,  72).float().cuda()
    len_nx = np.array(len_nx)
    len_nx = torch.from_numpy(len_nx).long().cuda()
    print(nx)
-
-   model = DeepConvLSTM().cuda()
-   out,atten = model(nx, len_nx)
+   #
+   model = Seq2Seq(
+            ).cuda()
+   out, atten = model(nx, len_nx, ny)
    print(out.size())
+   # model = DeepConvLSTM().cuda()
+   # out,atten = model(nx, len_nx, ny)
+   # print(out.size())
 

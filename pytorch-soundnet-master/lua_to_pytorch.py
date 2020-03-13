@@ -111,13 +111,13 @@ if __name__ == '__main__':
     # color11 = np.ones(225, )*0.5
     # # color = np.hstack((color1,color2,color3,color4,color5,color6,color7,color8,color9,color10))
     # color = np.hstack((color10, color11))
-    # train_x, train_y = load_dataset('C:\\ALEX\\Doc\\Reference\\SoundNet\\Dataset\\imu_train_data.json', FixLength=False)
-    # val_x, val_y = load_dataset('C:\\ALEX\\Doc\\Reference\\SoundNet\\Dataset\\imu_validate_data.json', FixLength=False)
-    # X1 = train_x.reshape(train_x.shape[0],-1)
-    # X2 = val_x.reshape(-1,216)
-    # X = np.vstack((X1,X2))
+    train_x, train_y = load_dataset('C:\\ALEX\\Doc\\Reference\\SoundNet\\PeriodicalLearning\\Dataset\\imu_train_data.json', FixLength=False, DataAugmentation=True)
+    val_x, val_y = load_dataset('C:\\ALEX\\Doc\\Reference\\SoundNet\\PeriodicalLearning\\Dataset\\imu_validate_data.json', FixLength=False)
+    X1 = train_x.reshape(train_x.shape[0],-1)
+    X2 = val_x.reshape(-1,216) #2673
+    X = np.vstack((X1, X2)) #155
     n_neighbors = 5
-    n_components = 2
+    n_components = 3
 
     print(X.shape)
     print(X[:10])
@@ -140,9 +140,13 @@ if __name__ == '__main__':
     t1 = time()
     print("t-SNE: %.2g sec" % (t1 - t0))  # 打印算法用时
 
-    ax = fig.add_subplot(2, 1, 2)
-    plt.scatter(Y[0:12, 0], Y[0:12, 1], c='r', cmap=plt.cm.Spectral)
-    plt.scatter(Y[12:20, 0], Y[12:20, 1], c='b', cmap=plt.cm.Spectral)
+
+    ax = fig.add_subplot(212, projection='3d')
+    ax.scatter(Y[0:X1.shape[0], 0], Y[0:X1.shape[0], 1], Y[0:X1.shape[0], 2], c='r', cmap=plt.cm.Spectral)
+    ax.scatter(Y[X1.shape[0]:-1, 0], Y[X1.shape[0]:-1, 1], Y[X1.shape[0]:-1, 2], c='b', cmap=plt.cm.Spectral)
+    ax.view_init(4, -72)  # 初始化视角
+    # plt.scatter(Y[0:X1.shape[0], 0], Y[0:X1.shape[0], 1], Y[0:X1.shape[0], 2], c='r', cmap=plt.cm.Spectral)
+    # plt.scatter(Y[X1.shape[0]:-1, 0], Y[X1.shape[0]:-1, 1], Y[X1.shape[0]:-1, 2], c='b', cmap=plt.cm.Spectral)
 
     plt.title("t-SNE (%.2g sec)" % (t1 - t0))
     ax.xaxis.set_major_formatter(NullFormatter())  # 设置标签显示格式为空

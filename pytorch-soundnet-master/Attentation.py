@@ -227,6 +227,71 @@ class Gaussian_Attentation(nn.Module):
         return attn.view(b, 1, -1, 1).float(), x
 
 
+class PlainEncoder(nn.Module):
+    def __init__(self, vocab_size, hidden_size, dropout=0.2):
+        super(PlainEncoder, self).__init__()
+        # self.embed = nn.Embedding(vocab_size, hidden_size)
+        # print("vocab_size---->")
+        # print(vocab_size)
+        self.input = nn.Linear(vocab_size, hidden_size )
+        self.rnn = nn.GRU(hidden_size, hidden_size, batch_first=True)
+        self.dropout = nn.Dropout(dropout)
+
+    def forward(self, x, lengths):  # 最后一个hidden state
+        # 把 batch里面的seq按照长度排序
+        sorted_len, sorted_idx = lengths.sort(0, descending=True)
+        x_sorted = x[sorted_idx.long()]
+        # embedded = self.dropout(self.embed(x_sorted))
+        # print("embedded.size()---->")
+        # print(embedded.size())
+        x_sorted = self.input(x_sorted)
+        packed_embedded = nn.utils.rnn.pack_padded_sequence(x_sorted, sorted_len.long().cpu().data.numpy(),
+                                                            batch_first=True)
+        packed_out, hid = self.rnn(packed_embedded)
+
+        out, _ = nn.utils.rnn.pad_packed_sequence(packed_out, batch_first=True)
+        print("out.size()---->")
+        print(out.size())
+        _, original_idx = sorted_idx.sort(0, descending=False)
+        out = out[original_idx.long()].contiguous()
+        hid = hid[:, original_idx.long()].contiguous()
+
+        return out, hid[[-1]]
+
+
+class PlainDecoder(nn.Module):
+    def __init__(self, vocab_size, hidden_size, dropout=0.2):
+        super(PlainDecoder, self).__init__()
+        # self.embed = nn.Embedding(vocab_size, hidden_size)
+        self.vocab_size = vocab_size
+        self.rnn = nn.GRU(hidden_size, hidden_size, batch_first=True)
+        self.out = nn.Linear(hidden_size, vocab_size)
+        # self.dropout = nn.Dropout(dropout)
+
+    def forward(self, y, y_lengths, hid):
+        b, c, w = y.size()
+        sorted_len, sorted_idx = y_lengths.sort(0, descending=True)
+        y_sorted = y[sorted_idx.long()]
+        hid = hid[:, sorted_idx.long()]
+
+        # y_sorted = self.dropout(self.embed(y_sorted))  # batch_size, output_length, embed_size
+
+        packed_seq = nn.utils.rnn.pack_padded_sequence(y_sorted, sorted_len.long().cpu().data.numpy(), batch_first=True)
+        out, hid = self.rnn(packed_seq, hid)
+        unpacked, _ = nn.utils.rnn.pad_packed_sequence(out, batch_first=True)
+        _, original_idx = sorted_idx.sort(0, descending=False)
+        output_seq = unpacked[original_idx.long()].contiguous()
+        #         print(output_seq.shape)
+        hid = hid[:, original_idx.long()].contiguous()
+
+        output = self.out(output_seq)
+
+        padding = output.view(b, -1)
+        padding_size = 72 - padding.shape[1] / self.vocab_size
+        padding = torch.zeros(b, int(padding_size), 3).cuda()
+        output =  torch.cat((output, padding), dim = 1)
+        return output, hid
+
 if __name__ == '__main__':
    # nx = torch.rand(100, 1, 72, 1).float()
    # # model = EncoderLayer(

@@ -246,10 +246,12 @@ def LongShortdistance(output, atten, label):
 
     Loss_output = loss(output, new_label)
     if attention:
-        Loss_atten = loss(atten.float(), new_atten)
-
-        Loss_total = Loss_output + Loss_atten
-        return Loss_output, Loss_atten, Loss_total
+        # Loss_atten = loss(atten.float(), new_atten)
+        #
+        # Loss_total = Loss_output + Loss_atten
+        # return Loss_output, Loss_atten, Loss_total
+        Loss_total = Loss_output
+        return Loss_output, torch.Tensor([0.]), Loss_total
     else:
         Loss_total = Loss_output
         return Loss_output, torch.Tensor([0.]), Loss_total
@@ -290,6 +292,7 @@ def data_augmentation(quat, vec, times):
         qy = np.array([np.cos(theta_y / 2),  0, np.sin(theta_y / 2),  0])
         qz = np.array([np.cos(theta_z / 2), 0, 0, np.sin(theta_z / 2)])
         v = []
+        bais = np.random.rand(1,3)
         for i in range(len(quat)):
             q_init = quat[i,:]
             q_init[0] = -q_init[0]

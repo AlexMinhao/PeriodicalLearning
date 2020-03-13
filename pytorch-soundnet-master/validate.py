@@ -42,7 +42,7 @@ def val_epoch(epoch, valition_loader, model, loss_function, optimizer, val_loss,
 
             # period = torch.mean(period, dim=1)
             # output, atten = model(seqs)
-            output, atten = model(seqs, seq_len)
+            output, atten = model(seqs, seq_len, seq_y)
             # print(outputs[1:3, :])
 
             loss_output, loss_atten, loss_total = loss_function(output, atten, labels)

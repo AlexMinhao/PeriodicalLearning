@@ -90,7 +90,7 @@ def load_dataset(path, FixLength = False, DataAugmentation = False, ws = Data_le
 
 
 if __name__ == '__main__':
-    writer = SummaryWriter(comment = 'ModelSoundPeaks-0226-seq2seq-3Axis-Baseline-Aug-10e6')
+    writer = SummaryWriter(comment = 'ModelSoundPeaks-0228-seq2seq-3Axis-Baseline-Aug-More-10e6')
 
 
     train_x, train_y = load_dataset('C:\\ALEX\\Doc\\Reference\\SoundNet\\PeriodicalLearning\\Dataset\\imu_train_data.json',FixLength = False, DataAugmentation=True)
