@@ -3,55 +3,64 @@ from Attentation import Encoder, Decoder, Gaussian_Attentation, PlainDecoder, Pl
 import torch
 import numpy as np
 import torch.nn as nn
-from definitions import Short_Length, attention, channel
+from definitions import *
 from triangularLayer import TriangularLayer
 from feature_extractors import HourglassExtractor, ResNetExtractor
-class Model(nn.Module):
-    def __init__(self, d_model, d_inner, n_head, d_k, d_v, dropout, NUM_FILTERS):
-        super(Model, self).__init__()
-
-        # self.encoder = EncoderLayer(
-        #     d_model=d_model, d_inner=d_inner,
-        #     n_head=n_head, d_k=d_k, d_v=d_v,
-        #      dropout=dropout)
-        self.num_fileters = NUM_FILTERS
-        self.soundnet = SoundNet(in_channel = 1)
-        self.triangular = TriangularLayer(Short_Length)
-        self.relu = nn.ReLU(True)
-        self.fc = nn.Linear(NUM_FILTERS, 4)
-        # self.atten = Self_Attentation(in_channel = 256)
-        self.atten = Gaussian_Attentation(in_channel = 1)
-
-        self.BN = nn.BatchNorm2d(1, eps=1e-5, momentum=0.1, affine=False)
-
-    def forward(self, x):
-        b, c, w, h = x.size()  # 20 1 72 1
-        # x = x.view(-1, 1, Short_Length, 1)
-        # x_short = x.view(-1, Short_Length, 1)
-        # x_short = self.triangular(x_short)
-        # x_short = x_short.view(-1, c, Short_Length, 1)
-
-        # x_long = torch.rand(b,  w).float().cuda()
-        para = None
-        if attention:
-           atten, para = self.atten(x)
-           atten = self.BN(atten)
-
-           #x = torch.stack((x, atten), dim = 1)
-           x = torch.cat((x, atten), dim = 2)
-           x = x.view(b, -1, 2*w, h)
-           # a = x[0]
-
-        x = self.soundnet(x) # 20 256 2 1
-
-        x = x.view(b, -1)
-        x = self.fc(x)
-        # x_short = torch.stack([x_short[i, :, x_atten_selection[i]] for i in range(0, x_atten_selection.size()[0])])
-
-        return x, para
-
+from torch.autograd import Variable
+import torch.nn.functional as F
 
 class DeepConvLSTM(nn.Module):
+    def __init__(self):
+        super(DeepConvLSTM, self).__init__()
+
+        self.conv1 = nn.Sequential(
+            nn.Conv2d(in_channels=1, out_channels=64, kernel_size=(5, 1), stride = (1, 1)),
+            nn.ReLU())
+        self.conv2 = nn.Sequential(
+            nn.Conv2d(64, 64, kernel_size=(5, 1), stride = (1, 1)),
+            nn.ReLU())
+        self.conv3 = nn.Sequential(
+            nn.Conv2d(64, 64, kernel_size=(5, 1), stride = (1, 1)),
+            nn.ReLU())
+        self.conv4 = nn.Sequential(
+            nn.Conv2d(64, 64,kernel_size=(5, 1), stride = (1, 1)),
+            nn.ReLU())
+
+        self.lstm = nn.LSTM(64, 128, 2, batch_first=True)
+
+        self.fc = nn.Linear(128, 18)
+
+    def forward(self, x):
+        # print (x.shape)
+        out = self.conv1(x)
+        # print (out.shape)
+        out = self.conv2(out)
+        # print (out.shape)
+        out = self.conv3(out)
+        # print (out.shape)
+        out = self.conv4(out)
+        # print (out.shape)
+        # out = out.view(-1, NB_SENSOR_CHANNELS, NUM_FILTERS)
+
+        out = out.view(-1,  113*8, 64)
+
+
+        h0 = Variable(torch.zeros(NUM_LSTM_LAYERS, out.size(0), NUM_UNITS_LSTM))
+        c0 = Variable(torch.zeros(NUM_LSTM_LAYERS, out.size(0), NUM_UNITS_LSTM))
+        if torch.cuda.is_available():
+            h0, c0 = h0.cuda(), c0.cuda()
+
+        # forward propagate rnn
+
+
+
+        out, _ = self.lstm(out, (h0, c0))
+        out = self.fc(out[:, -1, :])
+
+        return out
+
+
+class ConvLSTM(nn.Module):
     def __init__(self):
         super(DeepConvLSTM, self).__init__()
 
@@ -120,31 +129,140 @@ class Seq2Seq(nn.Module):
         return output
 
 
+class ae_spatial_LSTM_CNN(nn.Module):
+    def __init__(self):#, args):
+        super(ae_spatial_LSTM_CNN, self).__init__()
+        # parameter part
+        self.n_lstm_hidden = 64# args.n_lstm_hidden
+        self.n_lstm_layer = 1#args.n_lstm_layer
+
+        self.n_feature = 113 #args.n_feature
+        self.len_sw = 24# args.len_sw
+        self.n_class = 18# args.n_class
+
+        # autoencoder part
+        self.encoder = nn.Sequential(
+            nn.Linear(self.n_feature * self.len_sw, 128),
+            nn.ReLU(True),
+            nn.Linear(128, 64),
+            nn.ReLU(True),
+            nn.Linear(64, 32),
+            nn.ReLU(True),
+            nn.Linear(32, 20))
+        self.decoder = nn.Sequential(
+            nn.Linear(20, 32),
+            nn.ReLU(True),
+            nn.Linear(32, 64),
+            nn.ReLU(True),
+            nn.Linear(64, 128),
+            nn.ReLU(True),
+            nn.Linear(128, self.n_feature * self.len_sw),
+            nn.Tanh())
+        # rnn part
+        self.lstm = nn.LSTM(self.n_feature, self.n_lstm_hidden, self.n_lstm_layer, batch_first=True)
+        self.lstm_spatial = nn.LSTM(self.len_sw, self.n_lstm_hidden, self.n_lstm_layer, batch_first=True)
+
+        self.conv1 = nn.Sequential(
+            nn.Conv2d(in_channels=self.n_feature, out_channels=1024, kernel_size=(1, 5)),
+            # nn.BatchNorm1d()
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=(1, 2), stride=2)
+        )
+        self.conv2 = nn.Sequential(
+            nn.Conv2d(in_channels=1024, out_channels=512, kernel_size=(1, 3)),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=(1, 2), stride=2)
+        )
+        self.conv3 = nn.Sequential(
+            nn.Conv2d(in_channels=512, out_channels=128, kernel_size=(1, 1)),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=(1, 2), stride=2)
+        )
+        self.conv4 = nn.Sequential(
+            nn.Conv2d(in_channels=128, out_channels=64, kernel_size=(1, 1)),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=(1, 2), stride=2)
+        )
+
+        ## fc part after concat of three networks
+        self.fc1 = nn.Sequential(
+            nn.Linear(in_features=(2*self.n_lstm_hidden + 20 + 64), out_features=1000),
+            nn.ReLU()
+        )
+        self.fc2 = nn.Sequential(
+            nn.Linear(in_features=1000, out_features=500),
+            nn.ReLU()
+        )
+        self.fc3 = nn.Sequential(
+            nn.Linear(in_features=500, out_features=self.n_class)
+        )
+
+    def forward(self, x):
+
+        out_encoder = self.encoder(x.view(x.size(0), -1)) #x = torch.zeros(100, 51, 24)
+        out_decoder = self.decoder(out_encoder)
+
+        out_rnn, _ = self.lstm(x.view(x.shape[0], -1, self.n_feature)) # (64, 100, 9)
+        out_rnn = out_rnn[:, -1, :]
+
+        out_rnn_spatial, _ = self.lstm_spatial(x.view(x.shape[0], self.n_feature, -1))  # (64, 9, 100)
+        out_rnn_spatial = out_rnn_spatial[:, -1, :]
+
+        out_conv1 = self.conv1(x.view(-1, x.shape[1], 1, x.shape[2]))
+        out_conv2 = self.conv2(out_conv1)
+        out_conv3 = self.conv3(out_conv2)
+        out_conv4 = self.conv4(out_conv3)
+        out_conv4 = out_conv4.reshape(-1, out_conv4.shape[1] * out_conv4.shape[3])
+
+        out_combined = torch.cat((out_encoder.view(out_encoder.size(0), -1), out_rnn.view(out_rnn.size(0), -1),
+                                  out_rnn_spatial.view(out_rnn_spatial.size(0), -1),
+                                  out_conv4.view(out_conv3.size(0), -1)), dim=1)  # (64,184)
+        out_combined = self.fc1(out_combined)
+        out_combined = self.fc2(out_combined)
+        out_combined = self.fc3(out_combined)
+        out_combined = F.softmax(out_combined, dim=1)
+        return out_combined, out_decoder
+
+
+
 
 if __name__ == '__main__':
-   nx = torch.rand(20, 1, 3, 72).float().cuda()
-
-
-
-   nx = np.zeros((5,  72))
-
-   len_nx = []
-   for i in range(len(nx)):
-       for j in range((i + 1) * 12):
-           nx[i][j] = 1
-       len_nx.append((i + 1) * 12)
-
-   nx = torch.rand(5, 1, 3, 72).float().cuda()
-   ny = torch.rand(5,  72).float().cuda()
-   len_nx = np.array(len_nx)
-   len_nx = torch.from_numpy(len_nx).long().cuda()
-   print(nx)
+   # nx = torch.rand(20, 1, 3, 72).float().cuda()
    #
-   model = Seq2Seq(
-            ).cuda()
-   out, atten = model(nx, len_nx, ny)
-   print(out.size())
-   # model = DeepConvLSTM().cuda()
-   # out,atten = model(nx, len_nx, ny)
+   #
+   #
+   # nx = np.zeros((5,  72))
+   #
+   # len_nx = []
+   # for i in range(len(nx)):
+   #     for j in range((i + 1) * 12):
+   #         nx[i][j] = 1
+   #     len_nx.append((i + 1) * 12)
+   #
+   # nx = torch.rand(5, 1, 3, 72).float().cuda()
+   # ny = torch.rand(5,  72).float().cuda()
+   # len_nx = np.array(len_nx)
+   # len_nx = torch.from_numpy(len_nx).long().cuda()
+   # print(nx)
+   # #
+   # model = Seq2Seq(
+   #          ).cuda()
+   # out, atten = model(nx, len_nx, ny)
    # print(out.size())
+   x = torch.zeros(100, 1, 24, 113)
+   x = Variable(x)
+   x = x.cuda() if torch.cuda.is_available() else x
+   model = DeepConvLSTM().cuda()
+   out = model(x)
+   print(out.size())
 
+   # model = ae_spatial_LSTM_CNN()
+   # if torch.cuda.is_available():
+   #     model.cuda()
+   # # N C T V
+   # x = torch.zeros(100, 113, 24)
+   # x = Variable(x)
+   # x = x.cuda() if torch.cuda.is_available() else x
+   # out_combined, out_decoder = model(x)
+   # print(out_combined.size())
+   # print(out_decoder.size())

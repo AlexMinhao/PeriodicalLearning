@@ -118,11 +118,11 @@ def adjust_learning_rate(optimizer, epoch):
             lr = BASE_lr * 0.001
     else:
         # lr = BASE_lr * (1.5 ** (epoch //10))
-
-        if epoch <= 10:
-            lr = 0.05*BASE_lr
-        elif epoch <= 200 and epoch > 10:
-            lr = BASE_lr * (0.8 ** (epoch // 20))
+        Fix_epoch = 30
+        if epoch <= Fix_epoch:
+            lr = BASE_lr
+        elif epoch <= 200 and epoch > Fix_epoch:
+            lr = BASE_lr * (0.5 ** (epoch // Fix_epoch))
         # elif epoch <= 200 and epoch > 100:
         #     lr = BASE_lr * (0.9 ** (epoch // 20))
         else:
@@ -306,3 +306,28 @@ def data_augmentation(quat, vec, times):
         V.append(v)
     return V
 
+
+def get_scale_matrix(M, N):
+    s1 = torch.ones((N, 1)) * 1.0 / N
+    s2 = torch.ones((M, 1)) * -1.0 / M
+    return torch.cat((s1, s2), 0)
+
+def mmd_custorm(sample, decoded, sigma=[1]):
+    X = torch.cat((decoded, sample), 0)
+    XX = torch.matmul(X, X.t())
+    X2 = torch.sum(X * X, 1, keepdim=True)
+    exp = XX - 0.5 * X2 - 0.5 * X2.t()
+
+    M = decoded.size()[0]
+    N = sample.size()[0]
+    s = get_scale_matrix(M, N)
+    S = torch.matmul(s, s.t())
+
+    loss = 0
+    for v in sigma:
+        kernel_val = torch.exp(exp / v)
+        kernel_val = kernel_val.cpu()
+        loss += torch.sum(S * kernel_val)
+
+    loss_mmd = torch.sqrt(loss)
+    return loss_mmd

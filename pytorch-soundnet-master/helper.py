@@ -263,3 +263,7 @@ def ToDirection(quat,vec):
     vec3[1] = (xy_2 + wz_2) * vec[0] + (1 - (x2_2 + z2_2)) * vec[1] + (yz_2 - wx_2) * vec[2]
     vec3[2] = (xz_2 - wy_2) * vec[0] + (yz_2 + wx_2) * vec[1] + (1 - (x2_2 + y2_2)) * vec[2]
     return vec3
+
+
+
+
