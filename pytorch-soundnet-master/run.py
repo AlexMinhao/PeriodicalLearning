@@ -13,7 +13,7 @@ import torch
 from utils import Logger, data_augmentation
 import os
 from tensorboardX import SummaryWriter
-from model import  Seq2Seq, DeepConvLSTM, ae_spatial_LSTM_CNN
+from model import  Seq2Seq, DeepConvLSTM, ae_spatial_LSTM_CNN, DeepConvAE
 from Opportunity import *
 from sklearn.metrics import f1_score
 def load_dataset(path, FixLength = False, DataAugmentation = False, ws = Data_length, ss = Data_length/2):
@@ -91,7 +91,7 @@ def load_dataset(path, FixLength = False, DataAugmentation = False, ws = Data_le
 
 
 if __name__ == '__main__':
-    writer = SummaryWriter(comment = '316ActionRcog_AE_CONVLSTM_113_10e-6')
+    writer = SummaryWriter(comment = '316ActionRcog_Conve_AE_113_10e-6')
 
 ##################Runner#############################################
     # train_x, train_y = load_dataset('C:\\ALEX\\Doc\\Reference\\SoundNet\\PeriodicalLearning\\Dataset\\Runner\\imu_train_data.json',FixLength = False, DataAugmentation=True)
@@ -177,7 +177,7 @@ if __name__ == '__main__':
 
 
 
-    model =ae_spatial_LSTM_CNN() # DeepConvLSTM() #
+    model = DeepConvAE() #ae_spatial_LSTM_CNN() # DeepConvLSTM() #
 
 
     # If use CrossEntropyLoss，softmax wont be used in the final layer
@@ -237,8 +237,8 @@ if __name__ == '__main__':
         seqs = get_variable(seqs.float())
         labels = get_variable(labels.long())
         ######################################################################
-        seqs = torch.squeeze(seqs)
-        seqs = seqs.permute(0, 2, 1).contiguous()
+        # seqs = torch.squeeze(seqs)
+        # seqs = seqs.permute(0, 2, 1).contiguous()
 
         outputs, out_decoder = model(seqs)
         #####################################################################

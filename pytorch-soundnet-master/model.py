@@ -246,7 +246,59 @@ class ae_spatial_LSTM_CNN(nn.Module):
         return out_combined, out_decoder
 
 
+class DeepConvAE(nn.Module):
+    def __init__(self):
+        super(DeepConvAE, self).__init__()
+        self.encoder = nn.Sequential(
 
+            nn.Conv2d(in_channels=1, out_channels=NUM_FILTERS, kernel_size=(FILTER_SIZE, FILTER_SIZE)),
+            nn.ReLU(),
+
+            nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=(FILTER_SIZE, FILTER_SIZE)),
+            nn.BatchNorm2d(NUM_FILTERS),
+            nn.Dropout2d(0.5),
+            nn.ReLU(),
+
+            nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=(FILTER_SIZE, FILTER_SIZE)),
+            nn.BatchNorm2d(NUM_FILTERS),
+            nn.Dropout2d(0.5),
+            nn.ReLU(),
+
+            nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=(1, FILTER_SIZE)),
+            nn.ReLU(),
+
+        )
+
+
+        self.decoder = nn.Sequential(
+
+            nn.ConvTranspose2d(NUM_FILTERS, NUM_FILTERS, kernel_size=(1, FILTER_SIZE)),
+            nn.ReLU(),
+
+            nn.ConvTranspose2d(NUM_FILTERS, NUM_FILTERS, kernel_size=(FILTER_SIZE, FILTER_SIZE)),
+            nn.BatchNorm2d(NUM_FILTERS),
+            nn.Dropout2d(0.5),
+            nn.ReLU(),
+
+            nn.ConvTranspose2d(NUM_FILTERS, NUM_FILTERS, kernel_size=(FILTER_SIZE, FILTER_SIZE)),
+            nn.BatchNorm2d(NUM_FILTERS),
+            nn.Dropout2d(0.5),
+            nn.ReLU(),
+
+            nn.ConvTranspose2d(in_channels=NUM_FILTERS, out_channels=1, kernel_size=(FILTER_SIZE, FILTER_SIZE)),
+            nn.ReLU(),
+
+        )
+        self.Dense1 = nn.Linear(64*18*105, 256)
+        self.Dense2 = nn.Linear(256, 18)
+    def forward(self, x):
+
+        out_encoder = self.encoder(x)  # 100 64 18 105
+        out_decoder = self.decoder(out_encoder)
+
+        out = self.Dense1(out_encoder.view(-1, 64*18*105))
+        out = self.Dense2(out)
+        return out, out_decoder.view(out_decoder.size(0), -1)
 
 if __name__ == '__main__':
    # nx = torch.rand(20, 1, 3, 72).float().cuda()
@@ -271,6 +323,8 @@ if __name__ == '__main__':
    #          ).cuda()
    # out, atten = model(nx, len_nx, ny)
    # print(out.size())
+
+
    # x = torch.zeros(100, 1, 24, 113)
    # x = Variable(x)
    # x = x.cuda() if torch.cuda.is_available() else x
@@ -278,13 +332,22 @@ if __name__ == '__main__':
    # out = model(x)
    # print(out.size())
 
-   model = ae_spatial_LSTM_CNN()
-   if torch.cuda.is_available():
-       model.cuda()
-   # N C T V
-   x = torch.zeros(100, 113, 24)
-   x = Variable(x)
-   x = x.cuda() if torch.cuda.is_available() else x
-   out_combined, out_decoder = model(x)
-   print(out_combined.size())
-   print(out_decoder.size())
+    x = torch.zeros(100, 1, 24, 113)
+    x = Variable(x)
+    x = x.cuda() if torch.cuda.is_available() else x
+    model = DeepConvAE().cuda()
+    out, out_decoder = model(x)
+    print(out.size())
+
+
+
+   # model = ae_spatial_LSTM_CNN()
+   # if torch.cuda.is_available():
+   #     model.cuda()
+   # # N C T V
+   # x = torch.zeros(100, 113, 24)
+   # x = Variable(x)
+   # x = x.cuda() if torch.cuda.is_available() else x
+   # out_combined, out_decoder = model(x)
+   # print(out_combined.size())
+   # print(out_decoder.size())

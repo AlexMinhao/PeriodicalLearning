@@ -22,7 +22,7 @@ SLIDING_WINDOW_STEP = 12
 
 CHANNELS_OBJECT = 113 #51
 
-BATCH_SIZE = 100
+BATCH_SIZE = 50
 # Hardcoded number of classes in the gesture recognition problem
 NUM_CLASSES = 18
 # Length of the input sequence after convolutional operations

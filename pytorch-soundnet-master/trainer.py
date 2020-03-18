@@ -147,8 +147,8 @@ def train_epoch_action(epoch, train_loader, model, loss_function, optimizer,
         seqs = get_variable(seqs.float())
         labels = get_variable(labels.long())
         ######################################################################
-        seqs = torch.squeeze(seqs)
-        seqs = seqs.permute(0, 2, 1).contiguous()
+        # seqs = torch.squeeze(seqs)
+        # seqs = seqs.permute(0, 2, 1).contiguous()
 
         outputs, out_decoder = model(seqs)
         #####################################################################
@@ -158,8 +158,8 @@ def train_epoch_action(epoch, train_loader, model, loss_function, optimizer,
         loss_classify = loss_function[0](outputs, labels)
         ############################################################
         loss_ae = loss_function[1](seqs.view(seqs.size(0), -1), out_decoder)
-        loss_mmd = mmd_custorm(seqs.view(seqs.size(0), -1), out_decoder)
-        loss_mmd = loss_mmd.cuda().float()
+        # loss_mmd = mmd_custorm(seqs.view(seqs.size(0), -1), out_decoder)
+        # loss_mmd = loss_mmd.cuda().float()
         ###################################################################
         loss = loss_classify  + 1e-5 * loss_ae #+ 1.0 * loss_mmd
         losses.update(loss.data, seqs.size(0))
