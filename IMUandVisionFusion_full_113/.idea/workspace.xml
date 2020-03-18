@@ -2,14 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="d8e37c61-1e93-4cef-8521-796ae9d25435" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/run.py" beforeDir="false" afterPath="$PROJECT_DIR$/run.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../pytorch-soundnet-master/definitions.py" beforeDir="false" afterPath="$PROJECT_DIR$/../pytorch-soundnet-master/definitions.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../pytorch-soundnet-master/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/../pytorch-soundnet-master/model.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../pytorch-soundnet-master/results/model_best_adjust.pth" beforeDir="false" afterPath="$PROJECT_DIR$/../pytorch-soundnet-master/results/model_best_adjust.pth" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../pytorch-soundnet-master/run.py" beforeDir="false" afterPath="$PROJECT_DIR$/../pytorch-soundnet-master/run.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../pytorch-soundnet-master/runs/Mar17_14-25-56_AlexLIU316ActionRcog_Deep_LSTM_CNN_113_10e-6/events.out.tfevents.1584426356.AlexLIU" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../pytorch-soundnet-master/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/../pytorch-soundnet-master/utils.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />

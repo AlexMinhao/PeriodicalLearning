@@ -151,18 +151,30 @@ class ae_spatial_LSTM_CNN(nn.Module):
         # autoencoder part
         self.encoder = nn.Sequential(
             nn.Linear(self.n_feature * self.len_sw, 128),
+            nn.BatchNorm1d(128),
+            nn.Dropout(0.5),
             nn.ReLU(True),
             nn.Linear(128, 64),
+            nn.BatchNorm1d(64),
+            nn.Dropout(0.5),
             nn.ReLU(True),
             nn.Linear(64, 32),
+            nn.BatchNorm1d(32),
+            nn.Dropout(0.5),
             nn.ReLU(True),
             nn.Linear(32, 20))
         self.decoder = nn.Sequential(
             nn.Linear(20, 32),
+            nn.BatchNorm1d(32),
+            nn.Dropout(0.5),
             nn.ReLU(True),
             nn.Linear(32, 64),
+            nn.BatchNorm1d(64),
+            nn.Dropout(0.5),
             nn.ReLU(True),
             nn.Linear(64, 128),
+            nn.BatchNorm1d(128),
+            nn.Dropout(0.5),
             nn.ReLU(True),
             nn.Linear(128, self.n_feature * self.len_sw),
             nn.Tanh())
@@ -178,11 +190,13 @@ class ae_spatial_LSTM_CNN(nn.Module):
         )
         self.conv2 = nn.Sequential(
             nn.Conv2d(in_channels=1024, out_channels=512, kernel_size=(1, 3)),
+            nn.BatchNorm2d(512),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=(1, 2), stride=2)
         )
         self.conv3 = nn.Sequential(
             nn.Conv2d(in_channels=512, out_channels=128, kernel_size=(1, 1)),
+            nn.BatchNorm2d(128),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=(1, 2), stride=2)
         )
