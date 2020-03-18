@@ -2,7 +2,7 @@ CHECK_POINTS = 10
 
 EPOCH = 500
 
-BASE_lr = 10e-6 #0.5*10e-7
+BASE_lr = 3*10e-5
 
 pretrain = False
 
@@ -22,7 +22,17 @@ SLIDING_WINDOW_STEP = 12
 
 CHANNELS_OBJECT = 113 #51
 
-BATCH_SIZE = 50
+BATCH_SIZE = 100
+# Hardcoded number of classes in the gesture recognition problem
+NUM_CLASSES = 18
+# Length of the input sequence after convolutional operations
+FINAL_SEQUENCE_LENGTH = 8
 
+CHECK_POINTS = 10
+# Number filters convolutional layers
+NUM_FILTERS = 64
+# Size filters convolutional layers
+FILTER_SIZE = 3
+# Number of unit in the long short-term recurrent layers
 NUM_UNITS_LSTM = 128
-NUM_LSTM_LAYERS = 2
+NUM_LSTM_LAYERS = 4

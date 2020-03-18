@@ -117,16 +117,16 @@ def adjust_learning_rate(optimizer, epoch):
         if epoch > 50:
             lr = BASE_lr * 0.001
     else:
-        # lr = BASE_lr * (1.5 ** (epoch //10))
-        Fix_epoch = 30
-        if epoch <= Fix_epoch:
-            lr = BASE_lr
-        elif epoch <= 200 and epoch > Fix_epoch:
-            lr = BASE_lr * (0.5 ** (epoch // Fix_epoch))
-        # elif epoch <= 200 and epoch > 100:
-        #     lr = BASE_lr * (0.9 ** (epoch // 20))
-        else:
-            lr = BASE_lr*0.0005
+        lr = BASE_lr * (0.5 ** (epoch // 10))
+        # Fix_epoch = 30
+        # if epoch <= Fix_epoch:
+        #     lr = BASE_lr
+        # elif epoch <= 200 and epoch > Fix_epoch:
+        #     lr = BASE_lr * (0.5 ** (epoch // Fix_epoch))
+        # # elif epoch <= 200 and epoch > 100:
+        # #     lr = BASE_lr * (0.9 ** (epoch // 20))
+        # else:
+        #     lr = BASE_lr*0.0005
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
 

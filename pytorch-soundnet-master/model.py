@@ -14,21 +14,31 @@ class DeepConvLSTM(nn.Module):
         super(DeepConvLSTM, self).__init__()
 
         self.conv1 = nn.Sequential(
-            nn.Conv2d(in_channels=1, out_channels=64, kernel_size=(5, 1), stride = (1, 1)),
+            nn.Conv2d(in_channels=1, out_channels=NUM_FILTERS, kernel_size=(12, FILTER_SIZE), stride=(1, 3)),
             nn.ReLU())
         self.conv2 = nn.Sequential(
-            nn.Conv2d(64, 64, kernel_size=(5, 1), stride = (1, 1)),
+            nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=(FILTER_SIZE, FILTER_SIZE)),
+            nn.BatchNorm2d(NUM_FILTERS),
+            nn.Dropout2d(0.5),
             nn.ReLU())
         self.conv3 = nn.Sequential(
-            nn.Conv2d(64, 64, kernel_size=(5, 1), stride = (1, 1)),
+            nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=(FILTER_SIZE, FILTER_SIZE)),
+            nn.BatchNorm2d(NUM_FILTERS),
+            nn.Dropout2d(0.5),
             nn.ReLU())
         self.conv4 = nn.Sequential(
-            nn.Conv2d(64, 64,kernel_size=(5, 1), stride = (1, 1)),
+            nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=(1, FILTER_SIZE)),
+            # nn.BatchNorm2d(NUM_FILTERS),
+            # nn.Dropout2d(0.5),
             nn.ReLU())
+        self.conv5 = nn.Sequential(
+            nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=(1, FILTER_SIZE)),
+            # nn.BatchNorm2d(NUM_FILTERS),
+            # nn.Dropout2d(0.5),
+            nn.ReLU())
+        self.lstm = nn.LSTM(NUM_FILTERS, NUM_UNITS_LSTM, NUM_LSTM_LAYERS, batch_first=True)
 
-        self.lstm = nn.LSTM(64, 128, 2, batch_first=True)
-
-        self.fc = nn.Linear(128, 18)
+        self.fc = nn.Linear(NUM_UNITS_LSTM, NUM_CLASSES)
 
     def forward(self, x):
         # print (x.shape)
@@ -42,8 +52,7 @@ class DeepConvLSTM(nn.Module):
         # print (out.shape)
         # out = out.view(-1, NB_SENSOR_CHANNELS, NUM_FILTERS)
 
-        out = out.view(-1,  113*8, 64)
-
+        out = out.view(-1, 9 * 31, NUM_FILTERS)  # CHANNELS_NUM_50
 
         h0 = Variable(torch.zeros(NUM_LSTM_LAYERS, out.size(0), NUM_UNITS_LSTM))
         c0 = Variable(torch.zeros(NUM_LSTM_LAYERS, out.size(0), NUM_UNITS_LSTM))
@@ -53,10 +62,9 @@ class DeepConvLSTM(nn.Module):
         # forward propagate rnn
 
 
-
         out, _ = self.lstm(out, (h0, c0))
+        #  out[:, -1, :] -> [100,11,128] ->[100,128]
         out = self.fc(out[:, -1, :])
-
         return out
 
 
@@ -249,20 +257,20 @@ if __name__ == '__main__':
    #          ).cuda()
    # out, atten = model(nx, len_nx, ny)
    # print(out.size())
-   x = torch.zeros(100, 1, 24, 113)
-   x = Variable(x)
-   x = x.cuda() if torch.cuda.is_available() else x
-   model = DeepConvLSTM().cuda()
-   out = model(x)
-   print(out.size())
-
-   # model = ae_spatial_LSTM_CNN()
-   # if torch.cuda.is_available():
-   #     model.cuda()
-   # # N C T V
-   # x = torch.zeros(100, 113, 24)
+   # x = torch.zeros(100, 1, 24, 113)
    # x = Variable(x)
    # x = x.cuda() if torch.cuda.is_available() else x
-   # out_combined, out_decoder = model(x)
-   # print(out_combined.size())
-   # print(out_decoder.size())
+   # model = DeepConvLSTM().cuda()
+   # out = model(x)
+   # print(out.size())
+
+   model = ae_spatial_LSTM_CNN()
+   if torch.cuda.is_available():
+       model.cuda()
+   # N C T V
+   x = torch.zeros(100, 113, 24)
+   x = Variable(x)
+   x = x.cuda() if torch.cuda.is_available() else x
+   out_combined, out_decoder = model(x)
+   print(out_combined.size())
+   print(out_decoder.size())

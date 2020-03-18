@@ -105,7 +105,7 @@ if __name__ == '__main__':
 ##################Action Recog#############################################
 
     path = os.path.join(os.path.dirname(os.path.dirname(os.getcwd())),
-                        r'PeriodicalLearning\Dataset\OppSegBySubjectGesturesFull_113Validation.data')
+                        r'Dataset\OppSegBySubjectGesturesFull_113Validation.data')
     print("Loading data...")
     Opp = OPPORTUNITY(path)
     X_train, y_train, X_validation, y_validation, X_test, y_test = Opp.load()  # load_dataset(dp)
@@ -132,12 +132,12 @@ if __name__ == '__main__':
     validation_set = []
     testing_set = []
 
-    # X_train = list(X_train)
-    # y_train = list(y_train)
+    X_train = list(X_train)
+    y_train = list(y_train)
 
-    nullclass_index = np.argwhere(y_train == 0)
-    X_train = list(np.delete(X_train, nullclass_index, axis=0))
-    y_train = list(np.delete(y_train, nullclass_index))
+    # nullclass_index = np.argwhere(y_train == 0)
+    # X_train = list(np.delete(X_train, nullclass_index, axis=0))
+    # y_train = list(np.delete(y_train, nullclass_index))
 
     for i in range(len(y_train)):
         x = X_train[i]
@@ -182,7 +182,7 @@ if __name__ == '__main__':
 
     # If use CrossEntropyLoss，softmax wont be used in the final layer
     loss_function = [nn.CrossEntropyLoss(), nn.MSELoss()]
-    optimizer = optim.RMSprop(model.parameters(), lr=BASE_lr, momentum=0.9, weight_decay=0.9)
+    optimizer = optim.RMSprop(model.parameters(), lr=BASE_lr, momentum=0.9)
 
 
 

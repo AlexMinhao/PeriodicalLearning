@@ -76,8 +76,8 @@ if __name__ == '__main__':
     if torch.cuda.is_available():
         if os.name == 'nt':
             path = os.path.join(os.path.dirname(os.path.dirname(os.getcwd())),
-                                r'OPPORTUNITY\OppSegBySubjectGesturesFull_113Validation.data')
-            result_path = os.path.join(os.getcwd(), r'results')
+                                r'Dataset\OppSegBySubjectGesturesFull_113Validation.data')
+            result_path = os.path.join(os.getcwd(), r'log')
         else:
             path = os.path.join(os.path.dirname(os.getcwd()), r'OPPORTUNITY/OppSegBySubjectGesturesFull_113Validation.data')
             result_path = os.path.join(os.getcwd(), r'results')
@@ -133,18 +133,11 @@ if __name__ == '__main__':
         X_validation = X_validation.reshape((-1, 1, SLIDING_WINDOW_LENGTH, NB_SENSOR_CHANNELS_113))
         X_validation.astype(np.float32), y_validation.reshape(len(y_validation)).astype(np.uint8)
 
-    model = ConvLSTM()
-    if torch.cuda.is_available():
-        model.cuda()
-        print("Model on gpu")
-
-    # If use CrossEntropyLoss，softmax wont be used in the final layer
-    loss_function = nn.CrossEntropyLoss()
-    optimizer = optim.RMSprop(model.parameters(), lr=BASE_lr,momentum=0.9)
 
     training_set = []
     validation_set = []
     testing_set = []
+
 
     if DATAFORMAT:
         if CONTAIN_NULLCLASS:
@@ -156,26 +149,26 @@ if __name__ == '__main__':
                 y = y_train[i]
                 x_object_channel = 0
                 if y == 1 or 2 or 3 or 4:
-                    x_object_channel = np.repeat(10,24).reshape(24, 1)
+                    x_object_channel = np.repeat(10, 24).reshape(24, 1)
                 elif y == 5 or 6:
-                    x_object_channel = np.repeat(20,24).reshape(24, 1)
+                    x_object_channel = np.repeat(20, 24).reshape(24, 1)
                 elif y == 7 or 8:
-                    x_object_channel = np.repeat(30,24).reshape(24, 1)
+                    x_object_channel = np.repeat(30, 24).reshape(24, 1)
                 elif y == 9 or 10 or 11 or 12 or 13 or 14:
-                    x_object_channel = np.repeat(40,24).reshape(24, 1)
+                    x_object_channel = np.repeat(40, 24).reshape(24, 1)
                 elif y == 15:
-                    x_object_channel = np.repeat(50,24).reshape(24, 1)
+                    x_object_channel = np.repeat(50, 24).reshape(24, 1)
                 elif y == 16:
-                    x_object_channel = np.repeat(60,24).reshape(24, 1)
+                    x_object_channel = np.repeat(60, 24).reshape(24, 1)
                 elif y == 17:
-                    x_object_channel = np.repeat(70,24).reshape(24, 1)
+                    x_object_channel = np.repeat(70, 24).reshape(24, 1)
                 else:
-                    x_object_channel = np.repeat(0,24).reshape(24, 1)
+                    x_object_channel = np.repeat(0, 24).reshape(24, 1)
 
                 x_33_compass = x[-1, :, 33].reshape(24, 1)
-                x = np.delete(x[-1, :, :], 33, 1)   # delete 33 col and append the last
-                x = np.concatenate([x, x_33_compass,x_object_channel], axis=1)
-                x = x.reshape(1,24,CHANNELS_OBJECT)
+                x = np.delete(x[-1, :, :], 33, 1)  # delete 33 col and append the last
+                x = np.concatenate([x, x_33_compass, x_object_channel], axis=1)
+                x = x.reshape(1, 24, CHANNELS_OBJECT)
 
                 xy = (x, y)
                 training_set.append(xy)
@@ -211,7 +204,6 @@ if __name__ == '__main__':
 
                 xy = (x, y)
                 validation_set.append(xy)
-
 
             X_test = list(X_test)
             y_test = list(y_test)
@@ -294,6 +286,17 @@ if __name__ == '__main__':
             y = y_test[k]
             xy = (x, y)
             testing_set.append(xy)
+
+    model = ConvLSTM()
+    if torch.cuda.is_available():
+        model.cuda()
+        print("Model on gpu")
+
+    # If use CrossEntropyLoss，softmax wont be used in the final layer
+    loss_function = nn.CrossEntropyLoss()
+    optimizer = optim.RMSprop(model.parameters(), lr=BASE_lr,momentum=0.9)
+
+
 
 
     train_loader = DataLoader(dataset=training_set, batch_size=BATCH_SIZE, shuffle=True)
