@@ -2,7 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="d8e37c61-1e93-4cef-8521-796ae9d25435" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/../pytorch-soundnet-master/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/../pytorch-soundnet-master/model.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../pytorch-soundnet-master/run.py" beforeDir="false" afterPath="$PROJECT_DIR$/../pytorch-soundnet-master/run.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../pytorch-soundnet-master/trainer.py" beforeDir="false" afterPath="$PROJECT_DIR$/../pytorch-soundnet-master/trainer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../pytorch-soundnet-master/validate.py" beforeDir="false" afterPath="$PROJECT_DIR$/../pytorch-soundnet-master/validate.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />

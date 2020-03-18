@@ -91,7 +91,7 @@ def load_dataset(path, FixLength = False, DataAugmentation = False, ws = Data_le
 
 
 if __name__ == '__main__':
-    writer = SummaryWriter(comment = '316ActionRcog_Deep_LSTM_CNN_113_10e-6')
+    writer = SummaryWriter(comment = '316ActionRcog_AE_CONVLSTM_113_10e-6')
 
 ##################Runner#############################################
     # train_x, train_y = load_dataset('C:\\ALEX\\Doc\\Reference\\SoundNet\\PeriodicalLearning\\Dataset\\Runner\\imu_train_data.json',FixLength = False, DataAugmentation=True)
@@ -177,7 +177,7 @@ if __name__ == '__main__':
 
 
 
-    model = DeepConvLSTM() #ae_spatial_LSTM_CNN() #
+    model =ae_spatial_LSTM_CNN() # DeepConvLSTM() #
 
 
     # If use CrossEntropyLoss，softmax wont be used in the final layer
@@ -237,13 +237,13 @@ if __name__ == '__main__':
         seqs = get_variable(seqs.float())
         labels = get_variable(labels.long())
         ######################################################################
-        # seqs = torch.squeeze(seqs)
-        # seqs = seqs.permute(0, 2, 1).contiguous()
-        #
-        # outputs, out_decoder = model(seqs)
+        seqs = torch.squeeze(seqs)
+        seqs = seqs.permute(0, 2, 1).contiguous()
+
+        outputs, out_decoder = model(seqs)
         #####################################################################
 
-        outputs = model(seqs)
+        # outputs = model(seqs)
 
         labels = labels.squeeze()
         _, predicted = torch.max(outputs.data, 1)
